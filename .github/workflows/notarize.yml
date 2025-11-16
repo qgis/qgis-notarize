@@ -10,7 +10,60 @@ on:
 
 
 jobs:
+  prepare-matrix:
+    name: Prepare matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: 🐣 Checkout (no workspace needed)
+        uses: actions/checkout@v4
+
+      - name: 🌾 Set up GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: 🧭 Determine branches for matrix
+        id: set-matrix
+        run: |
+          # ensure jq is available
+          sudo apt-get update -y && sudo apt-get install -y jq
+
+          # always include master
+          base='[{"branch":"master"}]'
+
+          # list release-4* branches
+          release_branches=$(gh api repos/qgis/QGIS/branches --jq '.[] | select(.name | test("^release-4")) | .name' 2>/dev/null || true)
+
+          recent_json="[]"
+          for b in $release_branches; do
+            # get commit date for branch (commit sha or branch name accepted by commits API)
+            date_iso=$(gh api repos/qgis/QGIS/commits/$b --jq '.commit.committer.date' 2>/dev/null || true)
+            if [ -z "$date_iso" ]; then
+              continue
+            fi
+
+            # convert to seconds since epoch (GNU date available on ubuntu)
+            commit_secs=$(date -d "$date_iso" +%s)
+            now_secs=$(date -u +%s)
+            age=$(( now_secs - commit_secs ))
+
+            # 30 days in seconds
+            if [ "$age" -le $((30*24*3600)) ]; then
+              # append to recent_json
+              recent_json=$(echo "$recent_json" | jq --arg b "$b" '. + [{branch:$b}]')
+            fi
+          done
+
+          # merge master with recent release branches, avoid duplicates
+          matrix=$(jq -n --argjson base "$base" --argjson recent "$recent_json" '$base + ($recent | unique_by(.branch))')
+
+          echo "matrix<<EOF" >> $GITHUB_OUTPUT
+          echo "$matrix" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
   notarize:
+    needs: prepare-matrix
     runs-on: macos-latest
     env:
       KEYCHAIN_NAME: notary-keychain
@@ -18,8 +71,7 @@ jobs:
     
     strategy:
       matrix:
-        include:
-          - branch: master
+        include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
     
 
     steps:
@@ -265,8 +317,8 @@ jobs:
             exit 1
           fi
 
-          # Authenticate gh CLI with a PAT that can write to the main repository
-          echo "${{ secrets.PAT }}" | gh auth login --with-token
+          # Authenticate gh CLI with the workflow GITHUB_TOKEN (note: cross-repo uploads may require a PAT)
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-          echo "Uploading $FILE to release $RELEASE_TAG on qgis/QGIS (clobber existing asset)"
-          gh release upload "$RELEASE_TAG" "$FILE" --repo qgis/QGIS --clobber
+          echo "Uploading $FILE to release $RELEASE_TAG on m-kuhn/QGIS (clobber existing asset)"
+          gh release upload "$RELEASE_TAG" "$FILE" --repo m-kuhn/QGIS --clobber
