@@ -93,6 +93,8 @@ jobs:
           security set-keychain-settings -t 3600 -l "$KEYCHAIN_NAME"
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          # Print expiration date and other certificate metadata
+          security find-certificate -a -p "$KEYCHAIN_NAME" | openssl x509 -noout -subject -issuer -dates
 
       - name: 🐎 Mount the DMG
         id: mount
