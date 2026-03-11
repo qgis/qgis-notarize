@@ -57,7 +57,7 @@ jobs:
           # merge master with recent release branches, avoid duplicates
           matrix=$(jq -n --argjson base "$base" --argjson recent "$recent_json" '$base + ($recent | unique_by(.branch))')
 
-          echo "### Build matrix:\n\n```yaml\n$matrix``` :rocket:" >> $GITHUB_STEP_SUMMARY
+          printf '### Build matrix:\n\n```yaml\n%s\n```\n\n:rocket:\n' "$matrix" >> $GITHUB_STEP_SUMMARY
 
           echo "matrix<<EOF" >> $GITHUB_OUTPUT
           echo "$matrix" >> $GITHUB_OUTPUT
