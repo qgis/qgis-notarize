@@ -325,14 +325,19 @@ jobs:
           gh release upload "$RELEASE_TAG" "$FILE" --repo qgis/QGIS --clobber
 
       - name: 📦 Upload notarized DMG to the QGIS download page
-        if: github.event_name == 'repository_dispatch' && github.event.action == 'notarize_dmg'
         env:
-          RELEASE: pr
-          RELEASE_TAG: ${{ github.event.client_payload.release_tag }}
+          RELEASE: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'notarize_dmg' && 'pr' || matrix.branch }}
+          RELEASE_TAG_FROM_PAYLOAD: ${{ github.event.client_payload.release_tag }}
           ROOT: s3://qgis-download/macos
         run: |
           brew install s3cmd
           echo "${{ secrets.S3CFG }}" > ~/.s3cfg
+
+          if [ -n "$RELEASE_TAG_FROM_PAYLOAD" ]; then
+            RELEASE_TAG=$RELEASE_TAG_FROM_PAYLOAD
+          else
+            RELEASE_TAG=$(date -u +%Y-%m-%d)
+          fi
 
           DMG=$(ls *.dmg | head -n 1)
           sha256sum $DMG > $DMG.sha256sum
@@ -341,7 +346,7 @@ jobs:
               LOCAL=$1
               EXTENSION=$2
 
-              s3cmd put $LOCAL $ROOT/$RELEASE/qgis_pr_$RELEASE_TAG.$EXTENSION
+              s3cmd put $LOCAL $ROOT/$RELEASE/qgis_${RELEASE}_${RELEASE_TAG}.$EXTENSION
               s3cmd put $LOCAL $ROOT/qgis-macos-$RELEASE.$EXTENSION
           }
 
