@@ -34,6 +34,8 @@ jobs:
           # list release-4* branches
           release_branches=$(gh api repos/qgis/QGIS/branches --jq '.[] | select(.name | test("^release-4")) | .name' 2>/dev/null || true)
 
+          echo "Considering release branches: $release_branches"
+
           recent_json="[]"
           for b in $release_branches; do
             # get commit date for branch (commit sha or branch name accepted by commits API)
