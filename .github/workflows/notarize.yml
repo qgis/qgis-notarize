@@ -323,3 +323,33 @@ jobs:
 
           echo "Uploading $FILE to release $RELEASE_TAG on qgis/QGIS (clobber existing asset)"
           gh release upload "$RELEASE_TAG" "$FILE" --repo qgis/QGIS --clobber
+
+      - name: 📦 Upload notarized DMG to the QGIS download page
+        if: github.event_name == 'repository_dispatch' && github.event.action == 'notarize_dmg'
+        env:
+          RELEASE: pr
+          RELEASE_TAG: ${{ github.event.client_payload.release_tag }}
+          ROOT: s3://qgis-download/macos
+        run: |
+          brew install s3cmd
+          echo "${{ secrets.S3CFG }}" > ~/.s3cfg
+
+          DMG=$(ls *.dmg | head -n 1)
+          sha256sum $DMG > $DMG.sha256sum
+
+          process_file () {
+              LOCAL=$1
+              EXTENSION=$2
+
+              s3cmd put $LOCAL $ROOT/$RELEASE/qgis_pr_$RELEASE_TAG.$EXTENSION
+              s3cmd put $LOCAL $ROOT/qgis-macos-$RELEASE.$EXTENSION
+          }
+
+          echo "Upload $RELEASE_TAG"
+
+          # upload files
+          if [ -f $DMG ]; then
+              process_file $DMG dmg
+              process_file $DMG.sha256sum sha256sum
+              process_file downloaded-artifacts/splash.png png
+          fi
