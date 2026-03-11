@@ -16,7 +16,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: 🐣 Checkout (no workspace needed)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: 🌾 Set up GitHub CLI
         run: |
@@ -75,7 +75,7 @@ jobs:
 
     steps:
       - name: 🐣 Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: 🌾 Set up GitHub CLI
         run: |
@@ -295,7 +295,7 @@ jobs:
           xcrun stapler staple ${QGIS_APP_NAME}.dmg
 
       - name: 📤 Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: QGIS-${{ matrix.branch }}
           path: "*.dmg"
