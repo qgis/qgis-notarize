@@ -368,5 +368,5 @@ jobs:
           if [ -f $DMG ]; then
               process_file $DMG dmg
               process_file $DMG.sha256sum sha256sum
-              process_file downloaded-artifacts/splash.png png
+              # process_file downloaded-artifacts/splash.png png
           fi
