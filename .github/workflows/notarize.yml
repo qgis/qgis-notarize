@@ -277,7 +277,7 @@ jobs:
             ls -la
             exit 1
           fi
-          QGIS_APP_NAME="${APP_PATH%.*}"
+          QGIS_APP_NAME=$(basename "${APP_PATH%.app}") # e.g. QGIS-master-747a1a5
 
           brew install create-dmg
           create-dmg --volname "QGIS Installer" \
