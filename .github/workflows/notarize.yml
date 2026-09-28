@@ -26,7 +26,7 @@ jobs:
           esac
           workflow="${GITHUB_WORKFLOW_REF%%@*}"
           workflow="${workflow#${GITHUB_REPOSITORY}/.github/workflows/}"
-          gh api -X PUT "repos/${{ github.event.repository.name }}/actions/workflows/{workflow}/enable"
+          gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/enable"
 
       - name: 🐣 Checkout (no workspace needed)
         uses: actions/checkout@v6
