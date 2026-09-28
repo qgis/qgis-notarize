@@ -15,6 +15,12 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: ↺ Keep workflow enabled
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X PUT "repos/${{ github.event.repository.name }}/actions/workflows/${{ github.workflow }}/enable"
+
       - name: 🐣 Checkout (no workspace needed)
         uses: actions/checkout@v6
 
