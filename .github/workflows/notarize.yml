@@ -19,7 +19,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          gh api -X PUT "repos/${{ github.event.repository.name }}/actions/workflows/${{ github.workflow }}/enable"
+          # Copied from https://github.com/liskin/gh-workflow-keepalive/blob/7a9194bad497f0b993708eeaf10fc0a2d726eb71/action.yml#L22-L28
+          case "${GITHUB_WORKFLOW_REF:?}" in
+            "${GITHUB_REPOSITORY:?}"/.github/workflows/*.y*ml@*) ;;
+            *) false ;;
+          esac
+          workflow="${GITHUB_WORKFLOW_REF%%@*}"
+          workflow="${workflow#${GITHUB_REPOSITORY}/.github/workflows/}"
+          gh api -X PUT "repos/${{ github.event.repository.name }}/actions/workflows/{workflow}/enable"
 
       - name: 🐣 Checkout (no workspace needed)
         uses: actions/checkout@v6
