@@ -101,12 +101,12 @@ jobs:
       - name: 🏮 Get latest successful run ID
         if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
-          run_id=$(gh run list --repo "qgis/QGIS" \
-                    --workflow "build-macos-qt6.yml" \
-                    --branch ${{ matrix.branch }} \
-                    --limit 10 \
-                    --json databaseId,status,conclusion | \
-                    jq '[.[] | select(.status == "completed" and .conclusion == "success")] | sort_by(.databaseId) | reverse | .[0].databaseId')
+          run_id=$(gh run list --repo qgis/QGIS \
+                                --workflow build-macos-qt6.yml \
+                                --limit 100 \
+                                --json databaseId,headBranch,event,conclusion,createdAt \
+                                --jq '[.[] | select(.headBranch=="${{ matrix.branch }}" and .event=="push" and .conclusion=="success")]
+                                      | sort_by(.createdAt) | last | .databaseId'
           echo "Found run_id=$run_id"
           echo "RUN_ID=$run_id" >> $GITHUB_ENV
 
