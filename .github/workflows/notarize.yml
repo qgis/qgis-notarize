@@ -106,7 +106,7 @@ jobs:
                                 --limit 100 \
                                 --json databaseId,headBranch,event,conclusion,createdAt \
                                 --jq '[.[] | select(.headBranch=="${{ matrix.branch }}" and .event=="push" and .conclusion=="success")]
-                                      | sort_by(.createdAt) | last | .databaseId'
+                                      | sort_by(.createdAt) | last | .databaseId')
           echo "Found run_id=$run_id"
           echo "RUN_ID=$run_id" >> $GITHUB_ENV
 
